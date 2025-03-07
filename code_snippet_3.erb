@@ -1,0 +1,30 @@
+<!-- Our client wanted more options for how an inspector logged "piers" in their inspection.  This was the migration for that fix. -->
+
+class UpdatePiersOptions < ActiveRecord::Migration[7.0]
+  def up
+    add_column :orders, :piers_concrete, :boolean
+
+    orders = Order.all
+    orders.each do |o|
+      if o.piers_stacked == true || o.piers_mortared == true 
+        o.piers_concrete = true
+        o.save
+      end
+    end
+    remove_column :orders, :piers_stacked
+    remove_column :orders, :piers_mortared
+  end
+
+  def down
+    add_column :orders, :piers_stacked, :boolean
+    add_column :orders, :piers_mortared, :boolean
+    orders = Order.all
+    orders.each do |o|
+      if o.piers_concrete == true
+        o.piers_mortared = true
+        o.save
+      end
+    end
+    remove_column :orders, :piers_concrete
+  end
+end
