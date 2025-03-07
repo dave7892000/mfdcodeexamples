@@ -1,4 +1,4 @@
-<!-- This snippet was me adding a new controller and index for "companies" in our app.   We didn't know at the time exactly what data the client wanted to display, so that's why there are several placeholders in the table.-->
+<!-- This snippet was me adding a new controller, index, and rspec test for "companies" in our app.   We didn't know at the time exactly what data the client wanted to display, so that's why there are several placeholders in the table.-->
 <div class="row">
   <div class="col-sm-6">
     <h3>Companies</h3>
@@ -48,3 +48,19 @@ class SuperUser::CompaniesController < BaseSuperUserController
     redirect_to super_user_companies_path
   end
 end
+
+scenario "can discard a company", :js do
+    Company.discard_all
+    company = FactoryBot.create(:company, name:"David's Company")
+    inspector = FactoryBot.create(:inspector, company: company)
+
+    click_link "Companies"
+    first(".dropdown-toggle").click
+    ignore_alert
+    all(".dropdown-item").last.click
+
+    expect(page).to_not have_content("David's Company")
+    expect(company.reload.discarded?).to eq(true)
+    expect(inspector.reload.discarded?).to eq(true)
+    
+  end
