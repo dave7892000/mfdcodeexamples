@@ -1,0 +1,76 @@
+<!-- This feature was expanding the options for "tiedown_proprietary" on our order form. -->
+
+class ProprietaryTiedownSpacing < ActiveRecord::Migration[7.0]
+  def change 
+    add_column :orders, :tiedown_proprietary_spacing_front_right, :boolean
+    add_column :orders, :tiedown_proprietary_spacing_front_left, :boolean
+    add_column :orders, :tiedown_proprietary_spacing_back_right, :boolean
+    add_column :orders, :tiedown_proprietary_spacing_back_left, :boolean
+
+    remove_column :orders, :tiedown_proprietary_spacing
+  end
+end
+
+<!-- decorator -->
+def tiedown_proprietary_fields
+    [:tiedown_proprietary_spacing_front_right, :tiedown_proprietary_spacing_front_left, :tiedown_proprietary_spacing_back_right, :tiedown_proprietary_spacing_back_left]
+end
+
+def tiedown_spacings
+  tiedown_names = tiedown_fields.map do |field|
+    if object[field]
+      if field == :tiedown_none
+        "#{I18n.t("activerecord.attributes.order.#{field}")}"
+      elsif field == :tiedown_proprietary 
+        "#{I18n.t("activerecord.attributes.order.#{field}")} #{tiedown_proprietary_spacings}"
+      else
+        "#{I18n.t("activerecord.attributes.order.#{field}")} (spacing every #{object["#{field}_spacing"]} feet)"
+      end
+    end
+  end + [tiedown_other]
+  tiedown_names.reject(&:blank?).to_sentence
+end
+
+def tiedown_proprietary_spacings
+  names = tiedown_proprietary_fields.filter_map do |field|
+    if object[field] == true
+      "#{I18n.t("activerecord.attributes.order.#{field}")}"
+    end
+  end
+  if names.present?
+    "(#{names.to_sentence})"
+  else 
+    ""
+  end
+end
+
+<!-- html for order form -->
+
+<div class="form-group">
+    <h4>Method(s) of Tiedown (Check all appropriate boxes and download at least 2 photos of each type)</h4>
+    <% order.tiedown_fields.each do |field| %>
+      <div class="row" data-controller="tiedown">
+        <div class="form-check col-sm-6">
+          <%= f.check_box field, data: { "action": "tiedown#toggleSpacing" }%>
+          <%= f.label field %>
+        </div>
+        <div class="col-sm-3" data-tiedown-target="spacing" <%= "hidden" unless order.send(field) %> >
+          <% if field != :tiedown_none %> 
+            <% if field != :tiedown_proprietary %>
+              Spacing: every
+              <%= f.number_field "#{field}_spacing", style: "width: 60px;"%>
+              feet
+            <% elsif field == :tiedown_proprietary %>
+              <% order.tiedown_proprietary_fields.each do |field| %>
+                <div class="row" >
+                  <div class="form-check col-sm-10">
+                  <%= f.check_box field %>
+                  <%= f.label field %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
