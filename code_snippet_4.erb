@@ -1,0 +1,51 @@
+<!-- Our client needed to expand the avaibale options for how a manufactured home is tied down.  This was the migration, html update and javascript controller to make that feature work.  -->
+
+class AddTiedownSpacings < ActiveRecord::Migration[7.0]
+  def change
+    add_column :orders, :tiedown_slab_spacing, :integer
+    add_column :orders, :tiedown_soil_spacing, :integer
+    add_column :orders, :tiedown_foundation_spacing, :integer
+    add_column :orders, :tiedown_floor_beams_spacing, :integer
+    add_column :orders, :tiedown_proprietary_spacing, :integer
+    add_column :orders, :tiedown_steel_cable_slab_spacing, :integer
+    add_column :orders, :tiedown_steel_cable_soil_spacing, :integer
+    add_column :orders, :tiedown_other_spacing, :integer
+  end
+end
+
+<div class="form-group">
+    <h4>Method(s) of Tiedown (Check all appropriate boxes and download at least 2 photos of each type)</h4>
+    <% order.tiedown_fields.each do |field| %>
+      <%= form_group_checkbox(f, field) %>
+      <div class="row" data-controller="tiedown">
+        <div class="form-check col-sm-6">
+          <%= f.check_box field, data: { "action": "tiedown#toggleSpacing" }%>
+          <%= f.label field %>
+        </div>
+        <div class="col-sm-3" data-tiedown-target="spacing" hidden>
+          <% if field != :tiedown_none %> 
+            Spacing: every
+            <%= f.number_field "#{field}_spacing", style: "width: 60px;"%>
+            feet
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["spacing"]
+  static values = {}
+  connect() {    
+  }
+
+  toggleSpacing(event) {
+    if(event.target.checked){
+      this.spacingTarget.hidden=false
+    } else {
+      this.spacingTarget.hidden=true
+    }
+  }
+}
